@@ -1,36 +1,44 @@
-def main():
-    N, list_of_num = get_input()
-    for i in range(N + 1):
-        print(play(i, list_of_num, N))
-    pass
+class Stack:
+    def __init__(self, size=10):
+        self.stack = [0 for i in range(size)]
+        self.top = -1
 
-def get_input():
-    N = int(input())
-    list_str = input()
-    num_list = [int(i) for i in list_str if i != " "]
-    return N, num_list
+    def isEmpty(self):
+        return self.top < 0
 
-def play(num, list_of_num, N):
-    pre = 0
-    result = 0
-    rmin = 0
-    rmax = N + 1
-    for guess in list_of_num:
-        if rmin <= num and num <= rmax:
-            ans = 1 if num < guess else 0
+    def push(self, value):
+        self.top += 1
+        self.stack.append(value)
 
-            if ans == 0 and pre == 1:
-                result += 1
-            pre = ans
+    def pop(self):
+        self.top -= 1
+        return self.stack.pop()
 
-            # posable bug
-            if ans == 1:
-                rmax = guess
-            else:
-                rmin = guess
-            if rmax - rmin == 1:
-                break
-    return result
+n = int(input())
+pos = dict()
+inp = [int(i) for i in input().split(" ")]
+for i in range(1, n + 1):
+    y = inp[i - 1]
+    pos[y] = i
 
-if __name__ == "__main__":
-    main()
+prev_stack = Stack()
+prev_pos = dict()
+for i in range(n, 0, -1):
+    while(not prev_stack.isEmpty() or prev_stack.top > i):
+        prev_stack.pop()
+    
+    if not prev_stack.isEmpty():
+        prev_pos[pos[i]] = prev_stack.top
+    
+    prev_stack.push(pos[i])
+
+stack = Stack()
+ans = 0
+for i in range(1, n + 1):
+    if pos[i] in prev_pos.keys():
+        if stack.isEmpty() or prev_pos[pos[i]] != prev_pos[stack.top]:
+            ans += 1
+    stack.push(pos[i])
+
+print(ans)
+    
