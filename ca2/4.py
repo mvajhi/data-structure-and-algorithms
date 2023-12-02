@@ -1,6 +1,7 @@
 def main():
     inp = get_input()
     dict_of_way = create_dict(inp["way"])
+    print("len num range: ", dict_of_way)
     solve(inp["shoes"], dict_of_way)
 
 def get_input():
@@ -28,8 +29,10 @@ def create_dict(way):
         if not way[i] in dict_way.keys():
             dict_way[way[i]] = [0, len(way)]
         dict_way[way[i]] = change_range(dict_way[way[i]], i)
+    print("before merge with smaller num: " ,dict_way)
 
     sorted_keys = sorted(dict_way.keys())
+    print("sorted keys: ", sorted_keys)
     for i in range(len(sorted_keys) - 1):
         cur = dict_way[sorted_keys[i + 1]]
         pre = dict_way[sorted_keys[i]]
@@ -39,11 +42,12 @@ def create_dict(way):
         # print(cur)
         pre = change_range(pre, cur[0])
         # print(pre)
-        dict_way[sorted_keys[i + 1]] = change_range(pre, cur[1])
+        pre = change_range(pre, cur[1])
+        dict_way[sorted_keys[i + 1]] = pre
         # print(dict_way[tmp[i + 1]])
         # print()
         
-    # print(dict_way)
+    print("after merge with smaller num: ", dict_way)
     return {i: dict_way[i][1] - dict_way[i][0] for i in dict_way.keys()}
 
 def solve(shoes, way):
