@@ -25,10 +25,13 @@ def change_range(old_range, num):
 
     return new_range
 
+def better_than(r1, r2):
+    return r1[1]-r1[0] < r2[1]-r2[0]
+
 def create_dict(way):
     dict_way = dict()
     for i in range(len(way)):
-        dict_way[way[i]] = [0, len(way)]
+        dict_way[way[i]] = [-1, len(way)]
     for i in range(len(way)):
         dict_way[way[i]] = change_range(dict_way[way[i]], i)
     #print("before merge with smaller num: " ,dict_way)
@@ -45,7 +48,8 @@ def create_dict(way):
         pre = change_range(pre, cur[0])
         # #print(pre)
         pre = change_range(pre, cur[1])
-        dict_way[sorted_keys[i + 1]] = pre
+        if better_than(pre, cur):
+            dict_way[sorted_keys[i + 1]] = pre
         # #print(dict_way[tmp[i + 1]])
         # #print()
         
