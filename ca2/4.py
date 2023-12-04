@@ -1,10 +1,24 @@
 def main():
     inp = get_input()
-    dict_of_way_p = create_dict(inp["way"])
+    list_final = create_dict(inp["way"])
+    ok_list = convert_to_ok_list(list_final,inp["way"])
     #print("len num range: ", dict_of_way_p)
-    dict_of_way_j = convert_p_to_j(dict_of_way_p,inp["way"])
+    #print(inp["shoes"])
 
-    solve(inp["shoes"], dict_of_way_j, len(inp["way"]))
+    output = solve(inp["shoes"], ok_list, len(inp["way"]))
+    print_output(output)
+
+def convert_to_ok_list(l, way):
+    way = sorted(way)
+    out = list()
+    for i in range(len(l)):
+        out.append([way[i], l[i]])
+    # print("ok_out",out)
+    return out
+
+def print_output(out):
+    for i in out:
+        print(i)
 
 def get_input():
     output = dict()
@@ -12,77 +26,120 @@ def get_input():
     output["way"] = [int(i) for i in input().split(" ")]
     output["shoes"] = []
     for i in range(b):
-        output["shoes"].append([int(i) for i in input().split(" ")])
+        output["shoes"].append([*[int(i) for i in input().split(" ")], i])
     return output
 
-def change_range(old_range, num):
-    new_range = old_range
-    if old_range[0] < num and num < old_range[1]:
-        if num - old_range[0] > old_range[1] - num:
-            new_range = [old_range[0], num]
-        else:
-            new_range = [num, old_range[1]]
-
-    return new_range
-
-def better_than(r1, r2):
-    return r1[1]-r1[0] < r2[1]-r2[0]
-
 def create_dict(way):
-    dict_way = dict()
-    for i in range(len(way)):
-        dict_way[way[i]] = [-1, len(way)]
-    for i in range(len(way)):
-        dict_way[way[i]] = change_range(dict_way[way[i]], i)
-    #print("before merge with smaller num: " ,dict_way)
-
-    sorted_keys = sorted(dict_way.keys())
-    #print("sorted keys: ", sorted_keys)
-    for i in range(len(sorted_keys) - 1):
-        cur = dict_way[sorted_keys[i + 1]]
-        pre = dict_way[sorted_keys[i]]
-        # #print()
-        # #print(tmp[i + 1])
-        # #print(pre)
-        # #print(cur)
-        pre = change_range(pre, cur[0])
-        # #print(pre)
-        pre = change_range(pre, cur[1])
-        if better_than(pre, cur):
-            dict_way[sorted_keys[i + 1]] = pre
-        # #print(dict_way[tmp[i + 1]])
-        # #print()
-        
-    #print("after merge with smaller num: ", dict_way)
-    return {i: dict_way[i][1] - dict_way[i][0] for i in dict_way.keys()}
-
-def solve(shoes, way, len_way):
-    for i in shoes:
-        if i[1] <= 0:
-            print(0)
-            continue
-        if i[1] >= len_way:
-            print(1)
-            continue
-        if way[i[1]] <= i[0]:
-            print(1)
+    l1 = convert_to_min_index_list(way, -1)
+    # print("l1: ",l1)
+    l2 = convert_to_min_index_list(list(reversed(way)), -1)
+    for i in range(len(l2)):
+        if l2[i] == -1:
+            l2[i] = len(way)
         else:
-            print(0)
+            l2[i] = len(way) - 1 - l2[i]
+    # print("l2: ",list(reversed(l2)))
+    lf = convert_l1_l2_to_lf(l1, l2, way)
+    # print("lf: ",lf)
+    my_list = [[way[i], i] for i in range(len(way))]
+    my_list = sorted(my_list, key=lambda t: t[0]) 
+    # print("my",my_list)
+    
+    m = -2
+    out = list()
+    for i in range(len(my_list) - 1, -1, -1):
+        m = max(m, lf[my_list[i][1]])
+        out.append(m)
+    out = list(reversed(out))
+    # print("out ", out)
+    return out
 
-def convert_p_to_j(p_dict : dict, way):
-    sorted_key = sorted(p_dict.keys(), reverse=True)
-    #print("sorted_key", sorted_key)
-    j_p = {len(way) + 1: 0}
-    for i in sorted_key:
-        j_p[p_dict[i]] = i
-    #print("j_p", j_p)
-    sorted_key = sorted(j_p.keys())
-    output = [0] * (len(way)+ 1)
-    output[0] = -1
-    for i in range(len(sorted_key)-1):
-        for j in range(sorted_key[i], sorted_key[i + 1]):
-            output[j] = j_p[sorted_key[i]]
-    #print("output", output)
+def convert_l1_l2_to_lf(l1, l2, way):
+    # new_l1, new_l2 = create_new_l1_l2(l1, l2, way)
+    #print(new_l1, new_l2)
+    lf = list()
+    for i in range(len(l1)):
+        lf.append( l2[len(l1) - 1 - i] - l1[i] - 1)
+    #print("lf", lf)
+    return lf
+
+
+def create_new_l1_l2(l1, l2, way):
+    new_l1 = dict()
+    for i in l1:
+        new_l1[i[0]] = len(way) + 1
+    
+    new_l2 = dict()
+    for i in l2:
+        new_l2[i[0]] = -2
+
+    for i in l1:
+        if i[1] < new_l1[i[0]]:
+            new_l1[i[0]] = i[1]
+
+    for i in l2:
+        if i[1] > new_l2[i[0]]:
+            new_l2[i[0]] = i[1]
+    return new_l1, new_l2
+
+def convert_to_min_index_list(inp_list, end_num):
+    output = list()
+    stack = list()
+    for i in range(len(inp_list)):
+        while(True):
+            if len(stack) == 0:
+                output.append(end_num)
+                if i < len(inp_list)-1 and inp_list[i] < inp_list[i+1]:
+                    stack.append([inp_list[i], i])
+                break
+            if stack[-1][0] < inp_list[i]: 
+                output.append(stack[-1][1])
+                if i < len(inp_list)-1 and inp_list[i] < inp_list[i+1]:
+                    stack.append([inp_list[i], i])
+                break
+            else:
+                stack.pop()
+
+    return output
+
+def solve(shoes, list_final, len_way):
+    list_final = sorted(list_final, key=lambda t: t[0]) 
+    # print(list_final)
+    new_dict = dict()
+    for i in list_final:
+        new_dict[i[0]] = i[1]
+    for i in list_final:
+        new_dict[i[0]] = max(i[1], new_dict[i[0]])
+    # list_final= new_dict
+    # print(new_dict)
+    sorted_key = sorted(new_dict.keys())
+    #print(sorted_key)
+    sorted_shoes = sorted(shoes, key=lambda t: t[0]) 
+    # print(sorted_shoes)
+    #print("sorted_key ",sorted_key)
+    index_list = 0
+    output = [0] * len(shoes)
+
+    # print(list_final)
+    # print(shoes)
+
+    index = 0
+    for i in range(len(sorted_shoes)):
+        while (True):
+            if index >= len(list_final):
+                break
+            if list_final[index][0] > sorted_shoes[i][0]:
+                break
+            index += 1
+        if index == 0:
+            if sorted_shoes[i][1] > len_way:
+                output[sorted_shoes[i][2]] = 1
+        else:
+            if index == len(list_final) or sorted_shoes[i][1] > list_final[index][1]:
+              if sorted_shoes[i][1] > 0:
+                output[sorted_shoes[i][2]] = 1
+    
+    
     return output
 
 if __name__ == "__main__":
