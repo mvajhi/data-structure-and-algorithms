@@ -18,6 +18,7 @@ def get_input():
     t, count = map(int, input().split())
     par = list(map(int, input().split()))
     out["parent"] = {i + 2: par[i] for i in range(t - 1)}
+    out["parent"][1] = 0
     # out["child"]  = {i + 1: [] for i in range(t)}
     out["count_child"] = {i + 1: 0 for i in range(t)}
     for i in range(t - 1):
