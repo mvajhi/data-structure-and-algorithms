@@ -6,11 +6,14 @@ def main():
 
 def ans_query(inp, query):
     ans = 0
+    p_list = {inp["parent"][i]:0 for i in query}
     for n in query:
-        if inp["parent"][n] not in query:
-            ans += inp["count_child"][n] + 1
-        else:
-            ans -= 1
+        ans += inp["count_child"][n] + 1
+        if inp["parent"][n] != None:
+            p_list[inp["parent"][n]] += 1
+
+    for i in set(query).intersection(p_list.keys()):
+        ans -= 2 * p_list[i]
     return ans
   
 def get_input():
