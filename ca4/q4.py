@@ -1,9 +1,10 @@
+from heapq import heapify, heappush, heappop
 class Node:
     def __init__(self, pos) -> None:
-        self.h = -1
+        self.cost = -1
         self.pos = pos
         self.seen = False
-        self.light = [0, -1]
+        self.light = False
 
 def main():
     inp = get_input()
@@ -13,53 +14,46 @@ def main():
 
 def solve(inp):
     nodes = create_nodes(inp)
+    return bfs(nodes, [(0, (0,0))], inp)
 
-    return recursion_solve([inp['n'], inp['m']], [nodes[inp['initial']]],
-                           inp['final'], inp['e'], nodes)
+def bfs(nodes, queue, inp):
+    while len(queue) != 0:
+        cost, pos = heappop(queue)
+        neighbor = get_neighbor(pos, inp['e'])
+        inp['e'] = remove_neighbor(inp['e'], neighbor)
+        neighbor_with_cost = calculate_cost(cost, pos, neighbor)
+        
+    return -1
 
+def calculate_cost(pre_cost, pos, neighbor):
+    output = list()
+    for n in neighbor:
+        if calculate_distance(pos, n) == 1:
+            pass
+
+def remove_neighbor(edge, neighbor):
+    return list(filter(lambda x: x not in neighbor, edge))
+    
 def create_nodes(inp):
     nodes = dict()
     for i in range(inp['n']):
         for j in range(inp['m']):
             nodes[(i, j)] = Node((i,j))
-    nodes[inp['initial']].h = 0
+    nodes[inp['initial']].cost = 0
+    
+    for i in inp['e']:
+        nodes[i].light = True
+    
     return nodes
 
-def recursion_solve(size, queue, final_pos, light_edges, nodes):
-    if len(queue) == 0:
-        return -1
-    node = queue.pop(0)
-    if node.pos == final_pos:
-        return node.h
-    
-    neighbor_pos = get_neighbor_pos(size, node.pos)
+def get_neighbor(pos, edge):
+    neighbor = list()
+    for i in [0,1]:
+        for j in [-2,-1,0,1,2]:
+            neighbor.extend(list(filter(
+                lambda p: p[i] == j + pos[i], edge)))
 
-    for p in neighbor_pos:
-        if nodes[p].seen:
-            continue
-        
-        nodes[p].h = node.h
-        if p in light_edges :
-            light_edges.pop()
-        elif is_light_ok(p, node.light):
-            pass
-        else:
-            nodes[p].h += 1
-
-        nodes[p].seen = True
-        queue.append(nodes[p])
-    
-    return recursion_solve(size, queue, final_pos,
-                           light_edges, nodes)
-
-def get_neighbor_pos(size, pos):
-    output = list()
-    for i in [-1,0,1]:
-        for j in [-1,0,1]:
-            new_pos = (pos[0]+i, pos[1]+j)
-            if is_ok_pos(size, new_pos, pos):
-                output.append(new_pos)
-    return output
+    return list(set(neighbor))
 
 def is_ok_pos (size, new_pos, pos) -> bool:
     for i in range(2):
