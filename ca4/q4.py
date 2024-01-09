@@ -1,4 +1,4 @@
-from heapq import heapify, heappush, heappop
+from collections import deque
 
 def main():
     inp = get_input()
@@ -6,16 +6,19 @@ def main():
     print(out)
 
 def solve(inp):
-    return bfs([(0, (0,0))], inp)
+    return bfs((0, (0,0)), inp)
 
-def bfs(queue, inp):
+def bfs(start, inp):
+    queue = deque()
+    queue.append(start)
+    inp['e'].append(start[1])
+    
     end_have_light = inp['final'] in inp['e']
     while len(queue) != 0:
-        cost, pos = heappop(queue)
-        neighbor = get_neighbor(pos, inp['e'])
-        inp['e'] = remove_neighbor(inp['e'], neighbor)
-        neighbor_with_cost = calculate_cost(cost, pos, neighbor)
-        push_all(neighbor_with_cost, queue)
+        cost, pos = queue.popleft()
+        inp['e'].remove(pos)
+        neighbor_with_cost = get_neighbor_with_cost(cost, pos, inp)
+        push_all(cost, neighbor_with_cost, queue)
         
         flag, out = check_state(cost, pos, inp['final'],
                                 end_have_light)
@@ -23,6 +26,59 @@ def bfs(queue, inp):
             return out
 
     return -1
+
+def get_neighbor_with_cost(cost, pos, inp):
+    close_neighbor = get_close_neighbor(pos, inp)
+    neighbor_with_cost = [(cost,i) for i in close_neighbor]
+    far_neighbor = get_far_neighbor(close_neighbor + [pos], inp)
+    neighbor_with_cost += [(cost + 1,i) for i in far_neighbor]
+    return neighbor_with_cost
+    
+def get_far_neighbor(queue, inp):
+    far_neighbor = list()
+    while True:
+        state = queue.pop()
+        new_neighbor = get_far(state, inp)
+        # inp['e'] = remove_neighbor(inp['e'], new_neighbor)
+        far_neighbor.extend(new_neighbor)
+        if len(queue) == 0:
+            break
+    return far_neighbor
+
+def get_far(pos, inp):
+    out = list()
+    for p in inp['e']:
+        if is_neighbor2(pos, p):
+            out.append(p)
+    return out
+
+def get_close_neighbor(pos, inp):
+    queue = [pos]
+    close_neighbor = list()
+    while True:
+        state = queue.pop()
+        new_neighbor = get_close(state, inp)
+        # inp['e'] = remove_neighbor(inp['e'], new_neighbor)
+        close_neighbor.extend(new_neighbor)
+        queue.extend(new_neighbor)
+        if len(queue) == 0:
+            break
+    
+    return close_neighbor
+
+def get_close(pos, inp):
+    out = list()
+    for p in inp['e']:
+        if is_adjacent(pos, p):
+            out.append(p)
+    return out
+
+def is_neighbor2(p1, p2):
+    for i in [0,1]:
+        if abs(p1[i] - p2[i]) <= 2:
+            return True
+    return False
+    
 
 def check_state(cost, pos, end, end_have_light):
     if end_have_light:
@@ -34,15 +90,19 @@ def check_state(cost, pos, end, end_have_light):
             
     return False, None
 
+# bug??
 def is_neighbor(p1, p2):
     for i in [0,1]:
         if abs(p1[i] - p2[i]) <= 1:
             return True
     return False
 
-def push_all(l, heap):
+def push_all(cost, l, queue: deque):
     for i in l:
-        heappush(heap, i)
+        if cost == i[0]:
+            queue.appendleft(i)
+        else:
+            queue.append(i)
 
 def calculate_cost(pre_cost, pos, neighbor):
     output = list()
@@ -54,11 +114,13 @@ def calculate_cost(pre_cost, pos, neighbor):
     return output
 
 def is_adjacent(pos, n):
-    out = False
+    count = 0
     for i in [0,1]:
         if abs(pos[i] - n[i]) == 1:
-            out = not out
-    return out
+            count += 1
+    if count == 2:
+        return True
+    return False
 
 def remove_neighbor(edge, neighbor):
     return list(filter(lambda x: x not in neighbor, edge))
